@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <!-- Basic page setup -->
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Belle – Choose Your Sketch</title>
+
+    <!-- Google Font: Great Vibes -->
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
+
+    <!-- p5.js and ml5.js libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/addons/p5.sound.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/addons/p5.dom.min.js"></script>
+    <script src="https://unpkg.com/ml5@0.12.2/dist/ml5.min.js"></script>
+
+    <style>
+        /* — Base layout styles — */
+        body {
+            margin: 0;
+            font-family: sans-serif;
+            background: #0a0a1e;
+            color: #fff;
+            overflow-x: hidden;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        .half {
+            flex: 1;
+            position: relative;
+            cursor: pointer;
+            background-size: cover;
+            background-position: center;
+        }
+
+        .half.left { background: #123; }
+        .half.right { background: #231; }
+
+        /* — Overlay text on halves — */
+        .overlay {
+            position: absolute;
+            bottom: 20%;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+        }
+
+        .overlay .title {
+            font-size: 3rem;
+            text-transform: uppercase;
+        }
+
+        .overlay .poem {
+            font-size: 1rem;
+            line-height: 1.4;
+        }
+
+        /* — Back button — */
+        #backBtn {
+            display: none;
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            padding: .5rem 1rem;
+            border: none;
+            border-radius: 6px;
+            background: #c62828;
+            color: #fff;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        /* — Sketch container for p5 canvas and prompts — */
+        #sketch-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* — Circular menu images — */
+        .menuImageContainer {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 2px solid #fff;
+            z-index: 5;
+        }
+
+        .menuImageContainer img { width: 100%; height: 100%; object-fit: cover; }
+        .menuImageContainer input { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+
+        /* — Nose prompt bubble — */
+        #nosePrompt {
+            position: absolute;
+            bottom: 120px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: none;
+            align-items: center;
+            font-size: 2rem;
+            z-index: 15;
+        }
+
+        #nosePrompt .bubble {
+            margin-left: .5rem;
+            background: #fff;
+            color: #000;
+            padding: .3rem .6rem;
+            border-radius: .6rem;
+            font-size: 1rem;
+        }
+
+        /* — Chat bubble styling — */
+        #chatBubble {
+            display: none;
+            position: absolute;
+            bottom: 200px;
+            left: 50%;
+            transform: translateX(-50%) scale(0);
+            background: rgba(255, 255, 255, 0.9);
+            color: #000;
+            padding: .5rem 1rem;
+            border-radius: 1rem;
+            pointer-events: none;
+            transition: transform .3s ease-out, opacity .3s ease-out;
+            opacity: 0;
+            font-size: 1.1rem;
+            z-index: 15;
+        }
+
+        /* — Modal dialog styles — */
+        #modalOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, .6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        #modal {
+            background: #fff;
+            color: #333;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80%;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, .3);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* — Modal header — */
+        #modalHeader {
+            padding: 1rem;
+            background: #f5f5f5;
+            position: relative;
+        }
+
+        #modalHeader h2 { margin: 0; font-size: 1.5rem; }
+
+        #modalClose {
+            position: absolute;
+            top: .5rem;
+            right: .5rem;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        /* — Modal content area — */
+        #modalContent {
+            padding: 1rem;
+            overflow-y: auto;
+            flex: 1;
+            line-height: 1.6;
+        }
+
+        /* — Floating help button — */
+        #openModalBtn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            background: #ffeb3b;
+            color: #333;
+            border-radius: 50%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, .3);
+            z-index: 50;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Menu screen with two halves -->
+    <div class="container" id="menu">
+
+        <div class="half left" onclick="location.search='?part=1'">
+            <!-- Belle menu icon -->
+            <div class="menuImageContainer">
+                <img id="BelleMenuImg" src="frame1.png" alt="Belle Image">
+                <input type="file" id="BelleUpload" accept="image/*">
+            </div>
+            <div class="overlay">
+                <span class="title">Belle</span>
+                <p class="poem">
+                    It basks in light and loves each gentle gaze,<br>
+                    Yet trembles softly under too much praise.
+                </p>
+            </div>
+        </div>
+
+        <div class="half right" onclick="location.search='?part=2'">
+            <!-- Blobert menu icon -->
+            <div class="menuImageContainer">
+                <img id="BlobertMenuImg" src="frame2.png" alt="Blobert Image">
+                <input type="file" id="BlobertUpload" accept="image/*">
+            </div>
+            <div class="overlay">
+                <span class="title">Blobert</span>
+                <p class="poem">
+                    It roars in silence when its needs are ignored,<br>
+                    Then purrs in delight when lovingly adored.
+                </p>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Back to menu button -->
+    <button id="backBtn">← Back to Menu</button>
+
+    <!-- Area where sketches load -->
+    <div id="sketch-container">
+        <!-- Prompt user where to look -->
+        <div id="nosePrompt">
+            <span>👃</span>
+            <div class="bubble">Look here!</div>
+        </div>
+        <!-- Messages from the sketch -->
+        <div id="chatBubble"></div>
+    </div>
+
+    <!-- Modal for instructions -->
+    <div id="modalOverlay">
+        <div id="modal">
+            <div id="modalHeader">
+                <h2 id="modalTitle">Welcome</h2>
+                <button id="modalClose">×</button>
+            </div>
+            <div id="modalContent"></div>
+        </div>
+    </div>
+
+    <!-- Help button after modal closed -->
+    <div id="openModalBtn">!</div>
+
+    <script>
+        // Handle menu selection and sketch loading
+        const params = new URLSearchParams(location.search),
+            part = params.get('part');
+        if (part) {
+            document.getElementById('menu').style.display = 'none';
+            document.getElementById('backBtn').style.display = 'block';
+        }
+        document.getElementById('backBtn').onclick = () => location.href = location.pathname;
+        if (part === '1') {
+            document.write('<script src="Belle.js"><\/script>');
+        } else if (part === '2') {
+            document.write('<script src="Blobert.js"><\/script>');
+        }
+
+        // Modal display logic
+        const modalOverlay = document.getElementById('modalOverlay'),
+            modalClose = document.getElementById('modalClose'),
+            openModalBtn = document.getElementById('openModalBtn'),
+            modalTitle = document.getElementById('modalTitle'),
+            modalContent = document.getElementById('modalContent');
+
+        function setModalContent() {
+            if (part === '2') {
+                modalTitle.textContent = 'Blobert Instructions';
+                modalContent.innerHTML = `
+          <h3>How to Play with Blobert</h3>
+          <ul>
+            <li style="color:#e91e63">👀 Look directly to calm it.</li>
+            <li style="color:#3f51b5">🚫 Turn away to anger it.</li>
+            <li style="color:#4caf50">💬 Speak to see it mimic.</li>
+            <li style="color:#ff9800">⏳ Hold gaze for 7s to celebrate.</li>
+          </ul>
+        `;
+            } else if (part === '1') {
+                modalTitle.textContent = 'Welcome to Belle';
+                modalContent.innerHTML = `
+          <h3>Your Gaze–Grown Tree</h3>
+          <ul>
+            <li style="color:#4caf50">✔️ Grant webcam access.</li>
+            <li style="color:#2196f3">📍 Keep your nose in the white box.</li>
+            <li style="color:#ff9800">🌱 Watch leaves sprout.</li>
+            <li style="color:#e91e63">🌸 Click to bloom flowers.</li>
+          </ul>
+        `;
+            } else {
+                modalTitle.textContent = 'Main Menu Instructions';
+                modalContent.innerHTML = `
+          <h3>Get Started</h3>
+          <ul>
+            <li style="color:#4caf50">🌳 Click “Belle” to grow the tree.</li>
+            <li style="color:#ff5722">🐾 Click “Blobert” for the blob.</li>
+          </ul>
+        `;
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            setModalContent();
+            modalOverlay.style.display = 'flex';
+            openModalBtn.style.display = 'none';
+            // Hide menu images when sketch is active
+            document.querySelectorAll('.menuImageContainer').forEach(el => {
+                if (part) el.style.display = 'none';
+            });
+        });
+
+        // Modal open/close events
+        modalClose.onclick = () => {
+            modalOverlay.style.display = 'none';
+            openModalBtn.style.display = 'flex';
+        };
+        openModalBtn.onclick = () => {
+            modalOverlay.style.display = 'flex';
+            openModalBtn.style.display = 'none';
+        };
+        modalOverlay.addEventListener('click', e => {
+            if (e.target === modalOverlay) {
+                modalOverlay.style.display = 'none';
+                openModalBtn.style.display = 'flex';
+            }
+        });
+
+        // Handle uploads on menu icons
+        const BelleUpload = document.getElementById('BelleUpload'),
+            BelleImg = document.getElementById('BelleMenuImg'),
+            BlobertUpload = document.getElementById('BlobertUpload'),
+            BlobertImg = document.getElementById('BlobertMenuImg');
+
+        BelleUpload.addEventListener('change', evt => {
+            const f = evt.target.files[0];
+            if (!f) return;
+            const r = new FileReader();
+            r.onload = e => BelleImg.src = e.target.result;
+            r.readAsDataURL(f);
+        });
+
+        BlobertUpload.addEventListener('change', evt => {
+            const f = evt.target.files[0];
+            if (!f) return;
+            const r = new FileReader();
+            r.onload = e => BlobertImg.src = e.target.result;
+            r.readAsDataURL(f);
+        });
+    </script>
+</body>
+
+</html>
