@@ -1,5 +1,4 @@
 // Belle.js - Interactive Growing Tree with Face Engagement
-// Comments added for clarity and a more human-friendly style
 
 // Disable p5 friendly error messages to improve performance
 p5.disableFriendlyErrors = true;
@@ -33,9 +32,9 @@ const LEAF_MAX_SIZE = 40;     // Maximum width of any leaf
 // ─── GLOBALS ────────────────────────────────────────────
 let video, faceMesh, predictions = [], modelReady = false;
 let calmCol, yellowCol, redCol, deadCol, moodCol;
-let stage = 0; // current growth stage (0: growing, 1: flowering, 2: shy)
+let stage = 0; // current growth stage
 let barProg = 0; // progress through current stage
-let growth = 0; // normalized growth amount [0..1]
+let growth = 0; // normalized growth amount
 let lookAwayTS = null; // timestamp when user looked away
 
 // Tree and leaf angle/offset per depth level
