@@ -31,7 +31,7 @@ let gameOver = false, retryRect, menuRect;
 
 // Preload scream sound
 function preload() {
-    scream = loadSound('scream.mp3');
+    scream = loadSound('Scream.mp3');
 }
 
 // Setup canvas, video, and FaceMesh model
