@@ -61,8 +61,11 @@ function setup() {
 
 // Adjust canvas and video on window resize
 function windowResized() {
-    resizeCanvas(windowWidth, windowHeight);
+  resizeCanvas(windowWidth, windowHeight);
+  // only resize the video if it’s been created
+  if (video && video.size) {
     video.size(windowWidth, windowHeight);
+  }
 }
 
 // Update predictions, nose position, and mouth openness
