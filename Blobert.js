@@ -1,5 +1,4 @@
 // sketch2.js - Interactive Blob with Face Engagement
-// Light comments added to explain sections without altering code logic
 
 let video, facemesh, predictions = [];
 let modelReady = false;
