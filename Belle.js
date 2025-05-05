@@ -13,7 +13,6 @@ const BAR0_HEX = '#FF8C00'; // Color for stage 0 progress bar (calm)
 const BAR1_HEX = '#B22222'; // Color for stage 1 progress bar (flowering)
 const BAR2_HEX = '#B22222'; // Color for stage 2 progress bar (shy)
 const DEAD_HEX = WOOD_TIP;  // Color when the tree is dying
-const POEM_HEX = '#FAF3E0'; // Color for any poem/text (unused here)
 
 // ─── LAYOUT CONSTANTS ─────────────────────────────────
 // Video preview dimensions and padding
